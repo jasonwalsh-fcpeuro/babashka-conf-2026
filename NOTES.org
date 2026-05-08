@@ -343,6 +343,12 @@ against AI-assisted development.
 
 *** Notes
 
+- Referenced 2025 discourse on LLM limits in programming
+- No mention of specs or formal methods as alternative safeguards
+- Skeptical of humans-as-guardrails for AI-generated code
+- Noted he does not use LLMs for development
+- Core thesis: developers should think through consequences, not
+  delegate reasoning to tools
 
 *** Takeaways
 
@@ -365,6 +371,11 @@ GraphQL). Influenced Relay, Falcor, Fulcro.
 
 *** Notes
 
+- Advocated lateral thinking — solve problems by reframing, not
+  by adding more machinery
+- Improve tools by studying what works, not chasing novelty
+- "Just accepting" existing approaches is not a strong position —
+  question defaults before building on them
 
 *** Takeaways
 

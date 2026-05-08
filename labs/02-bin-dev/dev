@@ -1,0 +1,52 @@
+#!/usr/bin/env bb
+
+;; bin/dev pattern — single entry point for project tooling
+
+(require '[lambdaisland.cli :as cli]
+         '[clojure.string :as str])
+
+(defn run-tests
+  "Run the test suite."
+  {:flags ["--watch" "Re-run on file changes"
+           "--fail-fast" "Stop after first failure"]}
+  [opts]
+  (let [args (cond-> ["clojure" "-M:test"]
+               (:fail-fast opts) (conj "--fail-fast")
+               (:watch opts)     (conj "--watch"))]
+    (println (str/join " " args))))
+
+(defn run-lint
+  "Lint source files."
+  [opts]
+  (let [paths (or (seq (:lambdaisland.cli/argv opts)) ["src/" "test/"])]
+    (println (str "clj-kondo --lint " (str/join " " paths)))))
+
+(defn run-fmt
+  "Format source files."
+  {:flags ["--check" "Check only, don't modify"]}
+  [opts]
+  (println (str "cljfmt " (if (:check opts) "check" "fix"))))
+
+(defn deps-tree
+  "Show dependency tree."
+  [_opts]
+  (println "clojure -Stree"))
+
+(defn deps-outdated
+  "Check for outdated dependencies."
+  [opts]
+  (println (str "antq --format=" (name (get opts :format "table")))))
+
+(cli/dispatch
+ {:name "dev"
+  :doc "Project development tooling."
+  :commands
+  ["test" #'run-tests
+   "lint" #'run-lint
+   "fmt"  #'run-fmt
+   "deps" {:doc "Dependency management"
+           :commands ["tree"     #'deps-tree
+                      "outdated" #'deps-outdated]}]
+  :flags
+  ["-v, --verbose" {:doc "Increase verbosity" :default 0}
+   "--format <fmt>" {:doc "Output format" :default "table"}]})
