@@ -1,0 +1,20 @@
+#!/usr/bin/env bb
+
+;; Example 1: Basic auto-parsing — no flag declarations needed
+;; From: Arne Brasseur, "Friendly Command Line Tools" (Babashka Conf 2026)
+;;
+;; Usage:
+;;   ./01-basic-cli --help
+;;   ./01-basic-cli --verbose hello --format=json world
+;;   ./01-basic-cli -vvv --dry-run
+
+(require '[lambdaisland.cli :as cli]
+         '[clojure.pprint :as pprint])
+
+(defn basic-cli
+  "Demonstrate auto-parsing of flags and positional args."
+  [opts]
+  (println "Parsed options:")
+  (pprint/pprint opts))
+
+(cli/dispatch #'basic-cli)

@@ -1,0 +1,61 @@
+#!/usr/bin/env bb
+
+;; Example 2: Subcommands with custom flags
+;; Models the bin/dev pattern: single entry point for project tooling
+;;
+;; Usage:
+;;   ./02-subcommands --help
+;;   ./02-subcommands env ls
+;;   ./02-subcommands env ls --format=json
+;;   ./02-subcommands env check staging-uat
+;;   ./02-subcommands db seed --snapshot=production-2026-04-16
+;;   ./02-subcommands db migrate -vvv
+
+(require '[lambdaisland.cli :as cli]
+         '[clojure.pprint :as pprint])
+
+(defn env-ls
+  "List available environments."
+  [opts]
+  (let [fmt (get opts :format "table")]
+    (case (keyword fmt)
+      :json (println (pr-str {:environments ["production" "staging-uat" "staging-poc" "staging-artur"]}))
+      (doseq [env ["production" "staging-uat" "staging-poc" "staging-artur"]]
+        (println (format "  %-20s %s" env (if (= env "production") "LIVE" "staging")))))))
+
+(defn env-check
+  "Check environment health."
+  {:flags ["--timeout SECONDS" {:doc "Health check timeout" :default "10" :parse parse-long}]}
+  [opts]
+  (let [env (first (:lambdaisland.cli/argv opts))
+        timeout (:timeout opts)]
+    (println (format "Checking %s (timeout: %ds)..." (or env "all") timeout))
+    (println "OK")))
+
+(defn db-seed
+  "Seed database from snapshot."
+  {:flags ["--snapshot NAME" {:doc "RDS snapshot name" :required true}
+           "--scrub" "Scrub PII after restore"]}
+  [opts]
+  (println (format "Seeding from snapshot: %s" (:snapshot opts)))
+  (when (:scrub opts)
+    (println "PII scrubbing enabled")))
+
+(defn db-migrate
+  "Run pending migrations."
+  [opts]
+  (println (format "Running migrations (verbosity: %d)..." (get opts :verbose 0))))
+
+(cli/dispatch
+ {:name "dev"
+  :doc "Project development tooling."
+  :commands
+  ["env" {:doc "Environment management"
+          :commands ["ls" #'env-ls
+                     "check <env>" #'env-check]}
+   "db"  {:doc "Database operations"
+          :commands ["seed" #'db-seed
+                     "migrate" #'db-migrate]}]
+  :flags
+  ["-v, --verbose" {:doc "Increase verbosity" :default 0}
+   "--format <fmt>" {:doc "Output format" :default "table" :parse keyword}]})

@@ -1,3 +1,402 @@
-* Overview 
-* Sessions 
-* Notes
+#+TITLE: Babashka Conf 2026
+#+DATE: 2026-05-08
+#+AUTHOR: Jason Walsh
+#+LOCATION: OBA Oosterdok, Oosterdokskade 143, 1011 DL Amsterdam (6th floor, Forumzaal)
+
+* Overview
+
+Babashka-conf 2026 — second edition after Berlin 2023. Organized the
+day before Dutch Clojure Days 2026. ~200 person community conference.
+Babashka, SCI, GraalVM, and adjacent Clojure tooling.
+
+Sponsors: Exoscale, Bob, Nubank (Platinum), Itonomi (Gold), Flexiana (Platinum).
+MC: Wendy Randolph (US-based, functional developer + community builder).
+Organizer: Michiel Borkent (Babashka creator).
+
+* Schedule
+
+|  Time | Duration | Session                                              | Speaker         |
+|-------+----------+------------------------------------------------------+-----------------|
+| 13:00 |       30 | Registration + coffee                                |                 |
+| 13:30 |       15 | Welcome                                              | Michiel Borkent |
+| 13:45 |       25 | Scripting with SCI on your iPhone                    | Adrian Smith    |
+| 14:15 |       10 | Friendly Command Line Tools and Dev Automation       | Arne Brasseur   |
+| 14:30 |       10 | Write charming TUIs in babashka                      | Timo Kramer     |
+| 14:45 |       10 | Go for Clojure programmers                           | Rahul De        |
+| 15:00 |       30 | Break (vegan, nut-free snacks)                       |                 |
+| 15:30 |       25 | Flower: static site generator with Clojure templates | Jynn Nelson     |
+| 16:00 |       10 | Easy Made Complex                                    | Josh Glover     |
+| 16:15 |       25 | Keynote: More with Less                              | David Nolen     |
+| 16:40 |       15 | Closing notes                                        | Michiel Borkent |
+| 17:00 |       60 | Drinks (self-paid)                                   |                 |
+
+* Session Notes
+
+** DONE 13:45 Scripting with SCI on your iPhone (25 min)
+Speaker: Adrian Smith (creator of Easel, a Clojure IDE in the spirit of Emacs)
+
+nREPL server running on iPhone via GraalVM native image. SCI (Small
+Clojure Interpreter) enables REPL-driven development on mobile.
+
+*** Key points
+
+- GraalVM native-image produces binaries for iOS (not just Linux/macOS)
+- nREPL jack-in from desktop editor to phone — live code on device
+- SCI is the same interpreter that powers Babashka scripts
+- Mobile dev without Xcode build cycle — instant feedback
+
+*** Relevance
+
+- SCI runs constrained Clojure anywhere — same foundation as Babashka
+- Pattern: embed a Clojure interpreter in a non-JVM host (like
+  embedding bb in a shell script or a mobile app)
+
+*** Notes
+
+- nREPL as the core demo: Game of Life running on iPhone, connect
+  from desktop editor over local network
+- Multi-threading on SCI through iOS — practical concurrency demo
+- Build chain: JAR → OpenJDK → GraalVM Substrate VM (native-image)
+  → Gluon GluonFX plugin → cross-compile to ARM64 → .app bundle
+  (requires macOS + Xcode 11+ for code signing)
+- [[https://github.com/phronmophobic/objcjure][objcjure]] — Adrian's Clojure DSL for Objective-C interop: type
+  mapping, keyword-based method selectors, return-type hints, auto
+  conversion of anonymous functions to ObjC blocks
+- [[https://github.com/clj-easy/graalvm-clojure][clj-easy/graalvm-clojure]] — hello-world projects verifying 50+
+  Clojure libraries compile to GraalVM native images
+- [[https://github.com/clj-easy/graal-docs][clj-easy/graal-docs]] — practical guide for native compilation:
+  reflection management, static linking, runtime eval limitations
+- [[https://github.com/babashka/sci][SCI]] — configurable interpreter with allowlist/denylist per
+  namespace. Runs on JVM, GraalVM native, ClojureScript, plain JS.
+  Persistent evaluation state across calls (vars, namespaces).
+  Supports isolated multi-user contexts.
+
+*** Takeaways
+
+
+** DONE 14:15 Friendly Command Line Tools and Dev Automation (10 min)
+Speaker: Arne Brasseur (Gaiwan, Lambda Island, Heart of Clojure)
+
+lambdaisland/cli — opinionated CLI library. Auto-parsing flags, no
+up-front declaration. =bin/dev= script as project entry point for
+dev, build, and release tooling.
+
+*** Key points
+
+- tools.cli and bb CLI library require declaring flags up-front
+- lambdaisland/cli parses automatically — low ceremony
+- The =bin/dev= pattern: single entry point for all project tooling
+  - =bin/dev test=, =bin/dev build=, =bin/dev release=
+- Practical examples from Gaiwan's consulting projects
+
+*** Relevance
+
+- The =bin/dev= pattern: single entry point consolidating project
+  tooling — common pattern across ecosystems (Rails =bin/rails=,
+  Django =manage.py=, Rust =cargo xtask=)
+- lambdaisland/cli's auto-parsing is convention-over-configuration
+  for CLIs
+- [[https://github.com/lambdaisland/kaocha][Kaocha]] (859 stars) — full-featured test runner: watch mode,
+  fail-fast, random ordering, profiling, plugin architecture.
+  No first-class test.check/PBT plugin found — integration is
+  possible but not batteries-included
+- [[https://github.com/lambdaisland/launchpad][Launchpad]] — the =bin/launchpad= convention: single entry point
+  per project, reads deps.edn, starts nREPL with correct middleware,
+  hot-reloads deps without restart via lambdaisland.classpath
+
+*** Notes
+
+- [[https://github.com/lambdaisland/cli][lambdaisland/cli]] — auto-parsing: repeated flags counted (verbosity),
+  ~=~ args become key-value pairs with number coercion, remaining args
+  go to =:lambdaisland.cli/argv=. Auto-generates help text from
+  docstrings. Shell tab-completion (bash/zsh)
+- API: ={:command :flags :commands}= map → =cli/dispatch= → handler
+  receives parsed opts (also bound to =cli/*opts*=)
+- Arne's ~50 libraries under lambdaisland org include: Ornament
+  (component-scoped CSS), deep-diff2 (data structure diffing),
+  regal (regex composition), glogi (ClojureScript logging)
+- Standard tooling: opt + help + docstring generation, positional
+  args with naming, number-of-args handling
+- Pipe support: =--= terminates flag parsing, remaining args pass through
+- Defaults and filesystem: config can read defaults from file system
+- Middleware: wraps command handlers for cross-cutting concerns
+  (e.g., =--dry-run= binds a dynamic var around the command)
+- Stack traces + error handling: better error messages than raw
+  Clojure exceptions for CLI usage errors
+
+**** CC: CLI/TUI library comparison across languages
+
+| Language   | CLI library             | TUI library             | Auto-parse        | Subcommands   | Completion              |
+|------------+-------------------------+-------------------------+-------------------+---------------+-------------------------|
+| Clojure/bb | [[https://github.com/lambdaisland/cli][lambdaisland/cli]]        | [[https://github.com/TimoKramer/charm.clj][charm.clj]] (JLine)       | Yes (counts, k=v) | Yes (nested)  | bash/zsh                |
+| Ruby       | [[https://github.com/ruby/optparse][OptionParser]] (stdlib)   | [[https://github.com/piotrmurach/tty][TTY toolkit]]             | Manual declare    | Via Thor/GLI  | No (Thor has)           |
+| Ruby       | [[https://github.com/rails/thor][Thor]]                    | TTY::Prompt             | Manual declare    | Yes (classes) | bash/zsh                |
+| Python     | [[https://github.com/pallets/click][Click]]                   | [[https://github.com/Textualize/rich][Rich]] / [[https://github.com/Textualize/textual][Textual]]          | Decorators        | Yes (@group)  | bash/zsh/fish           |
+| Python     | [[https://github.com/tiangolo/typer][Typer]] (Click-based)     | Rich/Textual            | Type hints        | Yes           | bash/zsh/fish/PS        |
+| Rust       | [[https://github.com/clap-rs/clap][clap]]                    | [[https://github.com/ratatui/ratatui][ratatui]]                 | Derive macros     | Yes (nested)  | bash/zsh/fish/PS/elvish |
+| Go         | [[https://github.com/spf13/cobra][cobra]]                   | [[https://github.com/charmbracelet/bubbletea][bubbletea]]               | Struct tags       | Yes (nested)  | bash/zsh/fish/PS        |
+| Go         | [[https://github.com/urfave/cli][urfave/cli]]              | [[https://github.com/charmbracelet/lipgloss][lipgloss]] (styling)      | Manual            | Yes           | bash/zsh                |
+| TypeScript | [[https://github.com/yargs/yargs][yargs]]                   | [[https://github.com/vadimdemedes/ink][Ink]] (React)             | Chained builder   | Yes           | bash/zsh                |
+| TypeScript | [[https://github.com/oclif/oclif][oclif]] (Salesforce)      | Ink                     | Class-based       | Yes (topics)  | bash/zsh                |
+| TypeScript | [[https://github.com/tj/commander.js][commander.js]]            | [[https://github.com/patorjk/figlet.js][figlet.js]] (ASCII)       | Chained .option() | Yes           | No                      |
+| Haskell    | [[https://github.com/pcapriotti/optparse-applicative][optparse-applicative]]    | [[https://github.com/jtdaugherty/brick][brick]] (vty)             | Applicative style | Yes           | bash/zsh/fish           |
+| Haskell    | [[https://github.com/ndmitchell/cmdargs][cmdargs]]                 | brick                   | Record derive     | Yes (modes)   | No                      |
+| Guile      | =(ice-9 getopt-long)=   | [[https://github.com/NalaGinworksrulf/guile-ncurses][guile-ncurses]]           | S-expr spec       | Manual        | No                      |
+| Racket     | =command-line= (stdlib) | [[https://docs.racket-lang.org/charterm/][charterm]]                | Pattern match     | Via raco cmds | No                      |
+| Racket     | [[https://github.com/willghatch/racket-cli][racket-cli]]              | charterm                | Declarative       | Yes           | No                      |
+| Erlang     | =getopt= (stdlib)       | =cecho= (ncurses)       | Spec tuples       | Manual        | No                      |
+| Elixir     | [[https://hexdocs.pm/optimus/readme.html][Optimus]]                 | [[https://github.com/ndreynolds/ex_termbox][ExTermbox]] / Ratatouille | Keyword spec      | Via Mix tasks | No                      |
+| OCaml      | [[https://github.com/ocaml/ocaml/blob/trunk/stdlib/arg.mli][Arg]] (stdlib)            | [[https://github.com/pqwy/notty][notty]]                   | Spec list         | Manual        | No                      |
+| OCaml      | [[https://erratique.ch/software/cmdliner][cmdliner]]                | notty                   | Combinators       | Yes (terms)   | bash/zsh                |
+
+Key differences from lambdaisland/cli:
+- Most libraries require *declaring* flags before parsing. lambdaisland/cli
+  auto-parses unknown flags (counts, k=v coercion) — only Click/Typer
+  approach this via Python type annotations
+- The =bin/dev= pattern (single entry script) is closest to:
+  - Ruby: =bin/rails= (Rails), Rake tasks
+  - Python: =manage.py= (Django), =nox=
+  - Go: =mage= (Go-based make alternative)
+  - Rust: =cargo xtask= pattern
+  - JS/TS: =package.json= scripts, =nx=
+- charm.clj's Elm Architecture matches bubbletea (Go) exactly —
+  same init/update/view model, different runtime
+- Rust's clap derive macros are the most type-safe: struct fields
+  become flags with compile-time validation
+- Python's Typer is the closest to lambdaisland/cli's "zero ceremony"
+  philosophy — type hints replace flag declarations
+- Haskell's optparse-applicative is the most principled: applicative
+  functor style means the parser is composable and total. brick is
+  the gold standard for terminal UIs (used by Matterhorn, hledger-ui)
+- Guile/Racket: minimal CLI support in stdlib, no mature TUI ecosystem.
+  Guile's =(ice-9 getopt-long)= is POSIX-style, Racket's =command-line=
+  uses pattern matching. Both lack shell completion
+- OCaml's cmdliner is notable: combinator-based, generates man pages,
+  bash/zsh completion. Closest to lambdaisland/cli in design philosophy
+  (declarative, composable) but from the ML tradition
+- Erlang/Elixir: CLI tooling is minimal because the ecosystem assumes
+  long-running OTP applications, not CLI scripts. Elixir's Mix tasks
+  are the =bin/dev= equivalent
+
+*** Takeaways
+
+
+** DONE 14:30 Write charming TUIs in babashka (10 min)
+Speaker: Timo Kramer (freelance, co-organized first babashka conf Berlin)
+
+charm.clj — TUI library for Clojure/Babashka using JLine.
+Tables, text-input, overlays, borders. Instant startup.
+
+*** Key points
+
+- JLine integrated into Babashka directly after charm.clj published
+- Components: tables, text-input, styling (overlays, borders)
+- Instant startup — no JVM boot time
+- Proof-of-concept → adopted into Babashka core dependency
+
+*** Notes
+
+- [[https://github.com/TimoKramer/charm.clj][charm.clj]] — uses Elm Architecture (init/update/view), same
+  pattern as charmbracelet/bubbletea (Go) but on JVM/GraalVM/bb
+- Components: table, text-input, list, spinner, paginator, timer,
+  progress, help, viewport
+- Styling: overlay placement, colors (ANSI/256/truecolor), borders,
+  padding, text positioning
+- Built on JLine3 — Babashka bundles JLine3 natively since 1.12.215
+- Timo co-organized first babashka conf (Berlin 2023), contributed
+  to Datahike, currently freelance and open for projects
+
+- JLine already existed in bb — charm.clj builds on top of it as a
+  higher-level component library
+- Chat interfaces: charm.clj designed with LLM/chat UIs in mind
+  (2025+ use case). JLine + charmbracelet-style components for
+  building interactive chat interfaces in the terminal
+- Components demoed: borders, overlays, progress bars, mouse input
+- Logging caveat: be careful about logging to stdout in TUI apps —
+  it corrupts the terminal display. Use stderr or a file logger
+
+- Internal Elm structure: init returns initial model, update receives
+  model + message and returns [new-model cmd], view receives model
+  and returns string. Same functional loop as bubbletea
+
+*** Takeaways
+
+
+** DONE 14:45 Go for Clojure programmers (10 min)
+Speaker: Rahul De ([[https://github.com/lispyclouds][lispyclouds]], SRE, Babashka maintainer, London)
+
+Go as pragmatic tooling for Clojure developers. Babashka pods
+bridging Go and Clojure. Infra tooling where Go is unavoidable.
+
+*** Key points
+
+- Go is ubiquitous in infra (Kubernetes, Terraform, Docker, AWS CLI)
+- Babashka pods: Go binaries that expose functionality to bb scripts
+  via the pod protocol
+- Appreciate Go from Clojure lens: simplicity, single binary, fast
+  compilation, goroutines
+- Use cases: CLI tools, infra automation, augmenting Clojure workflow
+
+*** Notes
+
+- Pod protocol: nREPL-inspired message exchange over stdin/stdout
+  using bencode, with EDN/JSON/Transit JSON payload encoding
+- Any language can implement a pod (Go, Rust, Python)
+- [[https://github.com/babashka/pod-registry][Pod registry]]: manifests describe download URLs per OS/arch;
+  =(load-pod 'org.babashka/aws "0.0.5")= auto-downloads
+- Go pod examples: =tzzh/mail= (email), =pod-babashka-fswatcher=
+  (filesystem watcher, co-maintained by Rahul)
+- [[https://github.com/babashka/pods][Pod protocol docs]]
+- Rahul also created [[https://github.com/bob-cd/bob][Bob CD]] — modular, functional CI/CD
+  platform in Clojure (presented at clojureD 2020)
+- Porting pitfall: bash ~==~ for substring checking (=includes=)
+  translates to =(str/includes? s "SNAPSHOT")= in Clojure, not
+  =(= s "SNAPSHOT")= — exact match vs. substring is a common
+  bug when porting shell scripts to bb
+- Go's single binary distribution is the key advantage for infra
+  tooling — no runtime dependency, no version conflicts
+- Go CLI ecosystem (cobra, urfave/cli) dominates infra: kubectl,
+  terraform, docker, gh — all Go. Unavoidable for SREs
+- Kubernetes operators and controllers are overwhelmingly Go —
+  bb pods bridge the gap by wrapping Go binaries for Clojure
+- Reference to core.async: Go's goroutines + channels map directly
+  to core.async's go blocks + channels. Same CSP (Communicating
+  Sequential Processes) model, different syntax
+
+- See also: [[https://github.com/glojurelang/glojure][Glojure]] — Clojure implemented in Go. Alternative
+  to the pod bridge: run Clojure natively on Go's runtime with
+  goroutines, Go stdlib access, single binary output. Different
+  tradeoff from bb (GraalVM) vs Glojure (Go runtime)
+
+*** Takeaways
+
+
+** TODO 15:30 Flower: static site generator with Clojure templates (25 min)
+Speaker: Jynn Nelson ([[https://github.com/jyn514][jyn514]], Compiler Team Lead, Ferrous Systems)
+
+[[https://github.com/jyn514/flower][Flower]] — meta-SSG based on Pollen and Soupault. Build system
+masquerading as a static site generator. SCI + GraalVM.
+
+*** Key points
+
+- Configuration system: execute constrained Clojure programs (via SCI)
+- Dataflow: pipeline of Clojure functions
+- Template language: inline Clojure (not Hiccup, not Selmer)
+- Extension mechanism: Clojure macros = shortcodes = variables (same
+  language throughout). Post-processing via CSS-selector-based HTML
+  transformers (inspired by Soupault)
+- Self-contained apps offering REPL, backtraces, println debugging
+- Supports Markdown + AsciiDoc. Compilable to GraalVM native image
+- Sandboxing is "best-effort" via SCI's allowlist/denylist
+
+*** Notes
+
+- Jynn works on [[https://ferrocene.dev/][Ferrocene]] — safety-qualified Rust toolchain
+  (ISO 26262 ASIL D, IEC 61508 SIL 3, IEC 62304 Class C) for
+  automotive, aerospace, medical. Callgraph analysis, custom
+  compiler driver
+- "Unify users and programmers" — site authors get full programming
+  language control without being programmers. Same idea as contract
+  templates: product writes intent in a structured format, the
+  system (Flower / agent) formalizes it
+- Docs at [[https://flower.jyn.dev/][flower.jyn.dev]]
+
+*** Takeaways
+
+
+** TODO 16:00 Easy Made Complex (10 min)
+Speaker: Josh Glover (defn podcast co-host, Blambda creator)
+
+LLM coding tools as complexity embodied. Rich Hickey's "Simple Made
+Easy" and "Hammock Driven Development" as analytical framework
+against AI-assisted development.
+
+*** Key points
+
+- "Simple Made Easy" (2011): simplicity is objective (fewer
+  interleaved concerns), easiness is subjective (familiarity).
+  Developers choose "easy" tools that braid together complexity
+  instead of "simple" ones that keep concerns separate
+- "Hammock Driven Development" (2010): the most important work
+  happens away from the computer. Feed your background mind with
+  the problem's constraints, step away, let unconscious processing
+  work. Solutions that emerge should be critically evaluated
+- Rich Hickey has made *no public statements on AI/LLMs* — he
+  retired from active Clojure development in 2024. Glover is
+  extrapolating from Hickey's framework, not citing Hickey's
+  position on AI directly
+- LLMs undermine mastery — the practice of struggling with a problem
+  is what builds understanding
+- Complexity embodied: an LLM's output reflects its training data's
+  complexity, not the problem's inherent simplicity
+- Josh Glover: defn podcast co-host, works at Pitch. Created
+  [[https://github.com/jmglov/blambda][Blambda]] — custom Lambda runtime for Babashka (fast-start
+  Clojure on Lambda, bypassing JVM cold starts)
+
+*** Questions to consider
+
+- Does enumerating the state space enable lazy design?
+- Would a simpler system (fewer integrations) prevent bugs that
+  property-based testing finds?
+- Can agents help simplify (reduce states) instead of just verifying
+  (enumerating states)?
+
+*** Notes
+
+
+*** Takeaways
+
+
+** TODO 16:15 Keynote: More with Less (25 min)
+Speaker: David Nolen (lead developer of [[https://github.com/clojure/clojurescript][ClojureScript]])
+
+David Nolen: Cognitect (acquired by Nubank 2020), continues as
+ClojureScript lead. Created Om (2013) — React wrapper pioneering
+single global app-state atom with cursors. Om.Next (2015) introduced
+normalized state: application state as flat database with entities
+keyed by identity, eliminating duplicate nested data. Components
+declare data needs via query language (predated/co-evolved with
+GraphQL). Influenced Relay, Falcor, Fulcro.
+
+*** Key points
+
+- (Abstract not published — title only: "More with Less")
+- ClojureScript: mature, stable, actively maintained
+
+*** Notes
+
+
+*** Takeaways
+
+
+* Speakers and Projects
+
+| Speaker | Affiliation | Projects | Links |
+|---------+-------------+----------+-------|
+| Michiel Borkent | Babashka | Babashka, SCI | [[https://github.com/babashka/babashka][babashka]], [[https://github.com/babashka/sci][sci]] |
+| Adrian Smith | phronmophobic | Easel, objcjure | [[https://github.com/phronmophobic/easel][easel]], [[https://github.com/phronmophobic/objcjure][objcjure]] |
+| Arne Brasseur | Gaiwan / Lambda Island | cli, Kaocha, Launchpad | [[https://github.com/lambdaisland/cli][cli]], [[https://github.com/lambdaisland/kaocha][kaocha]], [[https://github.com/lambdaisland/launchpad][launchpad]] |
+| Timo Kramer | Freelance | charm.clj | [[https://github.com/TimoKramer/charm.clj][charm.clj]] |
+| Rahul De | SRE, bb maintainer | pods, Bob CD | [[https://github.com/babashka/pods][pods]], [[https://github.com/bob-cd/bob][bob]] |
+| Jynn Nelson | Ferrous Systems | Flower, Ferrocene | [[https://github.com/jyn514/flower][flower]], [[https://ferrocene.dev/][ferrocene]] |
+| Josh Glover | defn podcast / Pitch | Blambda | [[https://github.com/jmglov/blambda][blambda]] |
+| David Nolen | Cognitect / Nubank | ClojureScript | [[https://github.com/clojure/clojurescript][clojurescript]] |
+
+* Questions to Ask
+
+1. Arne Brasseur: how does =bin/dev= handle per-developer config
+   (env-specific settings, local overrides)?
+2. Rahul De: pod protocol overhead for wrapping CLIs that shell out
+   frequently? Practical for infra tooling at scale?
+3. Josh Glover: what's the Clojure answer for managing incidental
+   complexity in an existing system vs. greenfield?
+4. David Nolen: does normalized state (Om.Next model) eliminate UI
+   state space explosion or just move it to the query layer?
+
+* Upcoming Clojure Events
+
+- Dutch Clojure Days: May 9, 2026, Amsterdam.
+  [[https://clojuredays.org][clojuredays.org]]
+- EuroClojure 2027: returning after hiatus.
+  [[https://2027.euroclojure.org/][2027.euroclojure.org]]
+  ([[https://www.reddit.com/r/Clojure/comments/1t3hns2/we_are_bringing_the_euroclojure_conference_to/][Reddit announcement]])

@@ -1,0 +1,42 @@
+#!/usr/bin/env bb
+
+;; Example 3: Flag middleware and handlers
+;; Shows the pattern for env-specific behavior with flag middleware
+;;
+;; Usage:
+;;   ./03-flag-middleware --help
+;;   ./03-flag-middleware --prod run
+;;   ./03-flag-middleware --staging run -vvv
+;;   ./03-flag-middleware --dry-run run
+
+(require '[lambdaisland.cli :as cli]
+         '[clojure.pprint :as pprint])
+
+(def ^:dynamic *dry-run* false)
+
+(defn run-cmd
+  "Execute the configured action."
+  [opts]
+  (println (format "Environment: %s" (name (:env opts :development))))
+  (println (format "Dry run: %s" *dry-run*))
+  (println (format "Verbosity: %d" (get opts :verbose 0)))
+  (when-not *dry-run*
+    (println "Executing...")))
+
+(cli/dispatch
+ {:name "deploy"
+  :doc "Deployment tooling with environment selection."
+  :commands ["run" #'run-cmd]
+  :flags
+  ["--prod" {:doc "Use production environment"
+             :key :env
+             :value :production}
+   "--staging" {:doc "Use staging environment"
+                :key :env
+                :value :staging}
+   "--dry-run" {:doc "Show what would happen without executing"
+                :middleware [(fn [cmd]
+                               (fn [opts]
+                                 (binding [*dry-run* true]
+                                   (cmd opts))))]}
+   "-v, --verbose" {:doc "Increase verbosity" :default 0}]})
