@@ -377,6 +377,11 @@ GraphQL). Influenced Relay, Falcor, Fulcro.
 - "Just accepting" existing approaches is not a strong position —
   question defaults before building on them
 
+- "We already know how to build UIs" — the solved problems don't
+  need reinvention, focus energy on what's unsolved
+- Central question: do we need the functionality, or do we just
+  want it? Distinguish necessary from negotiated requirements
+
 *** Takeaways
 
 
