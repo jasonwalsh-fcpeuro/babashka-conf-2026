@@ -1,0 +1,95 @@
+#+TITLE: babashka-conf-2026
+#+AUTHOR: Jason Walsh
+#+DATE: 2026-05-08
+
+[[https://img.shields.io/badge/babashka-1.12.214-green.svg]]
+[[https://img.shields.io/badge/clojure-1.12.2-blue.svg]]
+[[https://img.shields.io/badge/license-EPL--2.0-orange.svg]]
+[[https://img.shields.io/badge/conference-babashka--conf%202026-purple.svg]]
+
+Conference notes, speaker research, and runnable examples from
+[[https://babashka.org/conf/][Babashka Conf 2026]] in Amsterdam.
+
+* Overview
+
+Second edition of babashka-conf (first was Berlin 2023). Held at OBA
+Oosterdok, Amsterdam, the day before Dutch Clojure Days 2026.
+
+Topics covered: Babashka, SCI, GraalVM native-image, CLI tooling with
+=lambdaisland/cli=, TUI development, pod protocol, and static site
+generation.
+
+* Prerequisites
+
+| Tool     | Version  | Install                 |
+|----------+----------+-------------------------|
+| Babashka | >= 1.12  | =brew install babashka= |
+| Clojure  | >= 1.12  | =brew install clojure=  |
+| Leiningen| >= 2.12  | =brew install leiningen=|
+| Java     | >= 21    | =brew install openjdk=  |
+
+* Project Structure
+
+#+begin_example
+.
++-- examples/           # lambdaisland/cli examples from Arne Brasseur's talk
+|   +-- 01-basic-cli/
+|   +-- 02-subcommands/
+|   +-- 03-flag-middleware/
++-- labs/               # Hands-on exercises inspired by sessions
+|   +-- 01-sci-sandbox/
+|   +-- 02-bin-dev/
+|   +-- 03-tui-elm/
+|   +-- 04-pod-protocol/
+|   +-- 05-sci-pipeline/
+|   +-- 06-complexity-audit/
+|   +-- 07-normalized-state/
++-- src/                # Clojure source
++-- NOTES.org           # Full conference notes
++-- project.clj         # Leiningen project
+#+end_example
+
+* Usage
+
+Run an example:
+
+#+begin_src shell
+cd examples/01-basic-cli
+bb greet.clj --help
+#+end_src
+
+Run a lab:
+
+#+begin_src shell
+cd labs/01-sci-sandbox
+bb sci_repl.clj
+#+end_src
+
+Start a REPL:
+
+#+begin_src shell
+lein repl
+#+end_src
+
+* Emacs Integration
+
+Load =babashka-conf-2026.el= for project helpers:
+
+#+begin_src emacs-lisp
+(load-file "babashka-conf-2026.el")
+#+end_src
+
+Keybindings (bind the command map to a prefix of your choice):
+
+| Key | Command                           |
+|-----+-----------------------------------|
+| =l= | Run a lab file                    |
+| =e= | Run an example script             |
+| =j= | CIDER jack-in to lab nREPL        |
+| =n= | Open conference notes             |
+
+* License
+
+Copyright 2026 Jason Walsh.
+
+Available under the [[https://www.eclipse.org/legal/epl-2.0/][Eclipse Public License 2.0]].
